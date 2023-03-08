@@ -1,0 +1,193 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+
+
+Question 1:
+```{r}
+# Question 1(a):
+library(MASS)
+mu1 <- matrix(0, 1,20)
+i20 <- diag(nrow=20)
+X <- mvrnorm(100, mu1, i20)
+i <- sample(1:20, size = 4, replace = FALSE)
+a <- rnorm(1, mean = 0, sd = 0.25)
+b <- rnorm(1, mean = 0, sd = 0.25)
+c <- rnorm(1, mean = 0, sd = 0.25)
+d <- rnorm(1, mean = 0, sd = 0.25)
+
+Y <- a*X[,i[1]]+b*X[,i[2]]+c*X[,i[3]]+d*X[,i[4]]+rnorm(100, mean = 0, sd = 1)
+```
+
+
+```{r}
+print("Values of i1,i2,i3,i4")
+print(i)
+```
+```{r}
+# Question 1(b):
+X_t = cbind(matrix(1,100,1), X)
+beta = solve((t(X_t)%*%X_t))%*%t(X_t)%*%Y
+print("Coefficient Vector using Linear Regression")
+print(beta)
+
+```
+```{r}
+#Question 1(c)
+rss = matrix(0,20,1)
+for(i in range(1:20))
+{
+  xi = X[1:100,i]
+  xit = cbind(matrix(1,100,1), xi)
+  rss[i] = t(xit%*%(solve((t(xit)%*%xit))%*%t(xit)%*%Y)-Y)%*%(xit%*%(solve((t(xit)%*%xit))%*%t(xit)%*%Y)-Y)
+}
+a1 = order(rss)
+print("Best 4 Using Forward Selection")
+print(a1[1:4])
+```
+
+```{r}
+#Question 1(d);
+lambda1 = 0.1
+beta_ridge = solve((t(X_t))%*%X_t+lambda1*diag(nrow=21))%*%t(X_t)%*%Y
+z=order(beta_ridge, decreasing=1)
+print("5 Highest Coefficients")
+print(z[1:5])
+```
+```{r}
+#Question 1(e):
+lambda2 = 0.1
+lambda2 = matrix(0.1,21,1)
+lambda2[1] = 0
+beta_lasso = matrix(1,21,1)
+J1 = -(X_t%*%beta_lasso-Y)
+
+
+j_lasso = function(beta_lasso)
+  j_lasso = t(J1)%*%J1 +sum((lambda2*abs(beta_lasso)))
+
+
+  
+x = optim(beta_lasso, j_lasso)
+
+beta_lasso = x$par
+z=order(beta_lasso, decreasing=1)
+print("5 Highest Coefficients")
+print(z[1:5])
+```
+
+Question 2:
+
+```{r}
+#Question 2(a):
+mu1 = c(0,0)
+sd1 = diag(2)
+mu2 = c(2,0)
+sd2 = sd1
+mu3 = c(1,sqrt(3))
+sd3 = sd2
+
+X1 = mvrnorm(50,mu1,sd1)
+X2 = mvrnorm(50,mu2,sd2)
+X3 = mvrnorm(50,mu3,sd3)
+Y1 = matrix(1,50,1)
+Y2 = matrix(2,50,1)
+Y3 = matrix(3,50,1)
+
+
+X = rbind(X1,X2,X3)
+Y = rbind(Y1,Y2,Y3)
+Xt = cbind(matrix(1,150,1), X)
+#Plotting
+```
+
+```{r}
+#Question 2(b):
+
+G = matrix(0,nrow(Y),3) #Making the Indicator Matrix
+
+for(i in 1:nrow(Y))
+{
+  for(j in 1:3)
+  {
+    if(j==Y[i])
+      G[i,j]=1
+  }
+  
+}
+
+beta_indicator = solve((t(Xt))%*%Xt)%*%t(Xt)%*%G
+#Plotting
+  
+```
+
+```{r}
+#Question 2(C)
+cov1=0
+for(i in 1:50)
+{
+  cov1 = cov1+t(X[i,1:2]-mu1)%*%(X[i,1:2]-mu1)
+}
+cov1 = cov1/49
+cov2 = 0
+for(i in 51:100)
+{
+  cov2 = cov2+t(X[i,1:2]-mu2)%*%(X[i,1:2]-mu2)
+}
+cov2 = cov2/48
+
+cov3 = 0
+for(i in 101:150)
+{
+  cov3 = cov3+t(X[i,1:2]-mu3)%*%(X[i,1:2]-mu3)
+}
+cov3=cov3/47
+
+p1 = 1/3
+p2 = p1
+p3 = p1
+
+f1 = function(x)
+  f1 = t(x)%8%cov1%*%mu1-0.5*t(mu1)%*%cov2%*%mu1+log(p1)
+
+f2 = function(x)
+  f2 = t(x)%8%cov2%*%mu2-0.5*t(mu2)%*%cov2%*%mu2+log(p2)
+
+f3 = function(x)
+  f3 = t(x)%8%cov3%*%mu3-0.5*t(mu3)%*%cov3%*%mu3+log(p3)
+
+pred = function(x)
+  if(f1>f2 && f1>f3)
+    pred = 1
+  if(f2>f1 && f2>f3)
+    pred = 2
+  if(f3>f1 && f3>f1)
+    pred = 3
+
+#Plotting
+  
+
+```
+
+```{r}
+#Question 2(d):
+library(glmnet)
+fit = glmnet(Xt,G,family="multinomial")
+
+predict(fit,matrix(3,1,3))
+
+#Plotting
+```
+
